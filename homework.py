@@ -2,7 +2,9 @@ import os
 import telegram
 import time
 import requests
+from requests.exceptions import RequestException
 import logging
+from http import HTTPStatus
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -39,14 +41,28 @@ def get_api_answer(current_timestamp):
     """Request to API-endpoint"""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
-    homeworks_status = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    try:
+        homeworks_status = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    except RequestException as request_error:
+        request_error = 'Invalid request data'
+        raise request_error
+    if homeworks_status.status_code != HTTPStatus.OK:
+        status_error = 'Request can not be executed'
+        raise status_error
     return homeworks_status.json()
 
 
 def check_response(response):
     """Check if homework exists in response"""
     if 'homeworks' not in response:
-        return 'API key error'
+        key_value_error = 'Invalid response key data'
+        raise key_value_error
+    elif not isinstance(response, dict):
+        data_type_error = 'Invalid response data type'
+        raise data_type_error
+    elif not isinstance(response['homeworks'], list):
+        data_type_error = 'Invalid key response data type'
+        raise data_type_error
     return response.get('homeworks')
 
 
