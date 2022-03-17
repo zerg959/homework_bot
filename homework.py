@@ -33,16 +33,17 @@ logger = logging.getLogger(__name__)
 
 
 def send_message(bot, message):
-    """Send message to chat"""
+    """Send message to chat."""
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
 
 
 def get_api_answer(current_timestamp):
-    """Request to API-endpoint"""
+    """Request to API-endpoint."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     try:
-        homeworks_status = requests.get(ENDPOINT, headers=HEADERS, params=params)
+        homeworks_status = requests.get(ENDPOINT, headers=HEADERS,
+                                        params=params)
     except RequestException as request_error:
         request_error = 'Invalid request data'
         raise request_error
@@ -53,7 +54,7 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """Check if homework exists in response"""
+    """Check if homework exists in response."""
     if 'homeworks' not in response:
         key_value_error = 'Invalid response key data'
         raise key_value_error
@@ -67,7 +68,6 @@ def check_response(response):
 
 
 def parse_status(homework):
-    # homework_name = requests.get(ENDPOINT, headers=HEADERS, params={'from date': int(time.time)})
     """Extracting homework status."""
     homework_name = homework['homework_name']
     homework_status = homework['status']
@@ -76,11 +76,11 @@ def parse_status(homework):
 
 
 def check_tokens():
-    """Check if tokens are correct"""
+    """Check if tokens are correct."""
     if (
-        PRACTICUM_TOKEN and
-        TELEGRAM_TOKEN and
-        TELEGRAM_CHAT_ID
+            PRACTICUM_TOKEN
+            and TELEGRAM_TOKEN
+            and TELEGRAM_CHAT_ID
     ):
         return True
     return False
