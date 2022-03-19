@@ -28,6 +28,7 @@ HOMEWORK_STATUSES = {
 }
 logger = logging.getLogger(__name__)
 
+
 def send_message(bot, message):
     """Send message to chat."""
     try:
@@ -93,7 +94,6 @@ def parse_status(homework):
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
-
 def check_tokens():
     """Check if tokens are correct."""
     return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
@@ -117,7 +117,6 @@ def main():
                     lesson_name = last_homework['lesson_name']
                     homework_status = parse_status(last_homework)
                     send_message(bot, f'{lesson_name}. {homework_status}')
-                    timestamp = response.get('current_date', timestamp)
                 except KeyError:
                     if 'lesson_name' not in last_homework:
                         logger.error('Unknown lesson name')
@@ -126,6 +125,7 @@ def main():
                 logger.debug('Статус не изменился')
             current_timestamp = response.get('current_date')
             current_error = ''
+            time.sleep(RETRY_TIME)
         except Exception as error:
             message = f"Сбой в работе программы: {error}"
             if str(error) != str(current_error):
