@@ -109,7 +109,6 @@ def main():
         raise BotException(check_tokens_error)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
-    current_error = ''
     current_homework_status = ''
     while True:
         response = get_api_answer(current_timestamp)
