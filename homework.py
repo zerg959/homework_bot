@@ -42,55 +42,58 @@ def get_api_answer(current_timestamp):
     """Request to API-endpoint."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
-    try:
-        logger.info('Sending API-request')
-        homeworks_status = requests.get(ENDPOINT, headers=HEADERS,
-                                        params=params)
-    except RequestException as request_error:
-        raise BotException(request_error)
+    homeworks_status = requests.get(ENDPOINT, headers=HEADERS,
+                                    params=params)
     if homeworks_status.status_code != HTTPStatus.OK:
         status_code_error = 'Request can not be executed'
         raise BotException(status_code_error)
+    try:
+        logger.debug('Sending API-request')
+    except RequestException as request_error:
+        raise BotException(request_error)
     return homeworks_status.json()
 
 
 def check_response(response):
     """Check if homework exists in response."""
-    try:
-        homeworks_list = response['homeworks']
-        homework = homeworks_list[0]
-    except BotException:
-        if type(response['homeworks']) is not list:
-            logger.error('Invalid response data type')
-            raise TypeError('Invalid data type')
-        if 'homeworks' not in response:
-            logger.error('No "homeworks" key in data')
-            raise KeyError('Invalid response key data')
-        if 'current_date' not in response:
-            logger.error('No "current_date" key in data')
-            raise KeyError('No "current_date" key in data')
-        if type(homework) is not dict:
-            logger.error('Invalid homework data type')
-            raise TypeError('Invalid homework data type')
-    return homeworks_list
+    if not isinstance(response, dict):
+        error = 'Invalid response data type'
+        logger.error(error)
+        raise TypeError(error)
+    if 'homeworks' not in response:
+        error = 'No homeworks key in data'
+        logger.error(error)
+        raise KeyError(error)
+    if not isinstance(response['homeworks'], list):
+        error = 'Invalid response[homeworks] data type'
+        logger.error(error)
+        raise TypeError(error)
+    if not isinstance(response['homeworks'][0], dict):
+        error = 'Invalid homework data type'
+        logger.error(error)
+        raise TypeError(error)
+    if 'current_date' not in response:
+        error = 'No "current_date" key in data'
+        logger.error(error)
+        raise KeyError(error)
+    return response['homeworks']
 
 
 def parse_status(homework):
     """Extracting homework status."""
-    try:
-        homework_name = homework['homework_name']
-        homework_status = homework['status']
-        verdict = HOMEWORK_STATUSES[homework_status]
-    except KeyError:
-        if 'homework_name' not in homework:
-            logger.error('Invalid homework name key data')
-            raise KeyError('Invalid response key data')
-        if homework['status'] not in HOMEWORK_STATUSES:
-            logger.error('Homework status not in the list')
-            raise KeyError('Homework status not in the list')
-        if verdict not in HOMEWORK_STATUSES.values():
-            logger.error('Unknown homework status')
-            raise KeyError('Unknown homework status')
+    if 'homework_name' not in homework:
+        logger.error('Invalid homework name key data')
+        raise KeyError('Invalid response key data')
+    if 'status' not in homework:
+        logger.error('Invalid homework name key data')
+        raise KeyError('Invalid response key data')
+    if homework['status'] not in HOMEWORK_STATUSES:
+        logger.error('Homework status not in the list')
+        raise KeyError('Homework status not in the list')
+
+    homework_name = homework['homework_name']
+    homework_status = homework['status']
+    verdict = HOMEWORK_STATUSES[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
@@ -107,33 +110,32 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     current_error = ''
+    current_homework_status = ''
     while True:
-        try:
-            response = get_api_answer(current_timestamp)
-            homeworks = check_response(response)
-            if len(homeworks) > 0:
-                try:
-                    last_homework = homeworks[0]
-                    lesson_name = last_homework['lesson_name']
-                    homework_status = parse_status(last_homework)
-                    send_message(bot, f'{lesson_name}. {homework_status}')
-                except KeyError:
-                    if 'lesson_name' not in last_homework:
-                        logger.error('Unknown lesson name')
-                        raise KeyError('Unknown lesson name')
-            else:
-                logger.debug('Статус не изменился')
-            current_timestamp = response.get('current_date')
-            current_error = ''
-            time.sleep(RETRY_TIME)
-        except Exception as error:
+        if str(error) != str(current_error):
             message = f"Сбой в работе программы: {error}"
-            if str(error) != str(current_error):
-                send_message(bot, message)
-                current_error = error
+            send_message(bot, message)
+            current_error = error
             logger.error(message)
-        finally:
-            time.sleep(RETRY_TIME)
+        response = get_api_answer(current_timestamp)
+        homeworks = check_response(response)
+        if len(homeworks) > 0:
+            if 'lesson_name' not in homeworks[0]:
+                error = 'Unknown lesson name'
+                logger.error(error)
+                raise KeyError(error)
+            last_homework = homeworks[0]
+            lesson_name = last_homework.get('lesson_name')
+            homework_status = parse_status(last_homework)
+            if current_homework_status != homework_status:
+                send_message(bot, f'{lesson_name}. {homework_status}')
+            current_homework_status = homework_status
+        else:
+            logger.debug('Статус не изменился')
+            current_timestamp = response['current_date']
+            current_error = ''
+            current_homework_status = current_homework_status
+        time.sleep(RETRY_TIME)
 
 
 if __name__ == '__main__':
