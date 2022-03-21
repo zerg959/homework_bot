@@ -127,7 +127,6 @@ def main():
         else:
             logger.debug('Статус не изменился')
             current_timestamp = response['current_date']
-            current_error = ''
             current_homework_status = current_homework_status
         time.sleep(RETRY_TIME)
 
