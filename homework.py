@@ -112,11 +112,6 @@ def main():
     current_error = ''
     current_homework_status = ''
     while True:
-        if str(error) != str(current_error):
-            message = f"Сбой в работе программы: {error}"
-            send_message(bot, message)
-            current_error = error
-            logger.error(message)
         response = get_api_answer(current_timestamp)
         homeworks = check_response(response)
         if len(homeworks) > 0:
