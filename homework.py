@@ -109,12 +109,16 @@ def main():
         raise BotException(check_tokens_error)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
+    current_status = ''
     while True:
         try:
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
-            if homeworks:
+            if homeworks and current_status != parse_status(homeworks[0]):
                 send_message(bot, parse_status(homeworks[0]))
+                current_status = parse_status(homeworks[0])
+            else:
+                current_status = current_status
             current_timestamp = response.get('current_date', current_timestamp)
         except Exception as error:
             message = f"Сбой в работе программы: {error}"
