@@ -138,5 +138,4 @@ if __name__ == '__main__':
         filename='bot_log.log',
         filemode='a'
     )
-
     main()
