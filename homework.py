@@ -68,7 +68,7 @@ def check_response(response):
         error = 'Invalid response[homeworks] data type'
         logger.error(error)
         raise TypeError(error)
-    if not isinstance(response['homeworks'][0], dict):
+    if not isinstance((response['homeworks'])[0], dict):
         error = 'Invalid homework data type'
         logger.error(error)
         raise TypeError(error)
