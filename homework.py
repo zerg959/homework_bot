@@ -116,17 +116,26 @@ def main():
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
             if len(homeworks) > 0:
+                if 'lesson_name' not in homeworks[0]:
+                    logger.error('Unknown lesson name')
+                    raise KeyError('Unknown lesson name')
+                last_homework = homeworks[0]
+                lesson_name = last_homework['lesson_name']
+                homework_status = parse_status(last_homework)
+                send_message(bot, f'{lesson_name}. {homework_status}')
                 if current_status != parse_status(homeworks[0]):
                     current_status = parse_status(homeworks[0])
                     send_message(bot, parse_status(homeworks[0]))
                 else:
-                    current_status = current_status
-            current_timestamp = response.get('current_date', current_timestamp)
+                    logger.debug('Статус не изменился')
+                current_timestamp = response.get('current_date')
+                current_error = ''
         except Exception as error:
             message = f"Сбой в работе программы: {error}"
-            if current_error != error:
+            if str(error) != str(current_error):
+                send_message(bot, message)
                 current_error = error
-                bot.send_message(TELEGRAM_CHAT_ID, message)
+            logger.error(message)
         finally:
             time.sleep(RETRY_TIME)
 
