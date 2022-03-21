@@ -110,25 +110,25 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     current_homework_status = ''
-    while True:
-        response = get_api_answer(current_timestamp)
-        homeworks = check_response(response)
-        if len(homeworks) > 0:
-            if 'lesson_name' not in homeworks[0]:
-                error = 'Unknown lesson name'
-                logger.error(error)
-                raise KeyError(error)
-            last_homework = homeworks[0]
-            lesson_name = last_homework.get('lesson_name')
-            homework_status = parse_status(last_homework)
-            if current_homework_status != homework_status:
-                send_message(bot, f'{lesson_name}. {homework_status}')
-            current_homework_status = homework_status
-        else:
-            logger.debug('Статус не изменился')
-            current_timestamp = response['current_date']
-            current_homework_status = current_homework_status
-        time.sleep(RETRY_TIME)
+    # while True:
+    response = get_api_answer(current_timestamp)
+    homeworks = check_response(response)
+    if len(homeworks) > 0:
+        if 'lesson_name' not in homeworks[0]:
+            error = 'Unknown lesson name'
+            logger.error(error)
+            raise KeyError(error)
+        last_homework = homeworks[0]
+        lesson_name = last_homework.get('lesson_name')
+        homework_status = parse_status(last_homework)
+        if current_homework_status != homework_status:
+            send_message(bot, f'{lesson_name}. {homework_status}')
+        current_homework_status = homework_status
+    else:
+        logger.debug('Статус не изменился')
+        current_timestamp = response['current_date']
+        current_homework_status = current_homework_status
+    time.sleep(RETRY_TIME)
 
 
 if __name__ == '__main__':
