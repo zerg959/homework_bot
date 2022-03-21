@@ -114,8 +114,9 @@ def main():
         try:
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
-            if homeworks and current_status != parse_status(homeworks[0]):
-                send_message(bot, parse_status(homeworks[0]))
+            if len(homeworks) > 0:
+                if current_status != parse_status(homeworks[0]):
+                    send_message(bot, parse_status(homeworks[0]))
                 current_status = parse_status(homeworks[0])
             else:
                 current_status = current_status
