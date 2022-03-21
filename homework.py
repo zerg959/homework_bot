@@ -117,9 +117,9 @@ def main():
             if len(homeworks) > 0:
                 if current_status != parse_status(homeworks[0]):
                     send_message(bot, parse_status(homeworks[0]))
-                current_status = parse_status(homeworks[0])
-            else:
-                current_status = current_status
+                    current_status = parse_status(homeworks[0])
+                else:
+                    current_status = current_status
             current_timestamp = response.get('current_date', current_timestamp)
         except Exception as error:
             message = f"Сбой в работе программы: {error}"
