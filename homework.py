@@ -125,7 +125,7 @@ def main():
         except Exception as error:
             message = f"Сбой в работе программы: {error}"
             if current_error != error:
-                current_error != error
+                current_error = error
                 bot.send_message(TELEGRAM_CHAT_ID, message)
         finally:
             time.sleep(RETRY_TIME)
