@@ -68,7 +68,7 @@ def check_response(response):
         error = 'Invalid response[homeworks] data type'
         logger.error(error)
         raise TypeError(error)
-    if not isinstance((response['homeworks'])[0], dict):
+    if not isinstance(response['homeworks'][0], dict):
         error = 'Invalid homework data type'
         logger.error(error)
         raise TypeError(error)
@@ -109,26 +109,24 @@ def main():
         raise BotException(check_tokens_error)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
+    current_error = ''
     current_homework_status = ''
-    # while True:
-    response = get_api_answer(current_timestamp)
-    homeworks = check_response(response)
-    if len(homeworks) > 0:
-        if 'lesson_name' not in homeworks[0]:
-            error = 'Unknown lesson name'
-            logger.error(error)
-            raise KeyError(error)
-        last_homework = homeworks[0]
-        lesson_name = last_homework.get('lesson_name')
-        homework_status = parse_status(last_homework)
-        if current_homework_status != homework_status:
-            send_message(bot, f'{lesson_name}. {homework_status}')
-        current_homework_status = homework_status
-    else:
-        logger.debug('Статус не изменился')
-        current_timestamp = response['current_date']
-        current_homework_status = current_homework_status
-    time.sleep(RETRY_TIME)
+    while True:
+        try:
+            response = get_api_answer(current_timestamp)
+            homeworks = check_response(response)
+            if homeworks:
+                send_message(bot, parse_status(homeworks[0]))
+            timestamp = response.get('current_date', current_timestamp)
+        except Exception as error:
+            message = f"Сбой в работе программы: {error}"
+            logging.exception(message)
+            try:
+                bot.send_message(TELEGRAM_CHAT_ID, message)
+            except Exception as error:
+                logging.exception(f"Сбой и отправке: {error}")
+        finally:
+            time.sleep(RETRY_TIME)
 
 
 if __name__ == '__main__':
@@ -138,4 +136,5 @@ if __name__ == '__main__':
         filename='bot_log.log',
         filemode='a'
     )
+
     main()
