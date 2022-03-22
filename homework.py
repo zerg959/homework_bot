@@ -120,8 +120,7 @@ def main():
             if len(homeworks) == 0:
                 logger.debug('Статус не изменился')
                 continue
-            # if len(homeworks) > 0:
-            else:
+            if len(homeworks) > 0:
                 if 'lesson_name' not in homeworks[0]:
                     logger.error('Unknown lesson name')
                     raise KeyError('Unknown lesson name')
@@ -135,7 +134,7 @@ def main():
                 current_error = current_error
                 current_status = current_status
         except Exception as error:
-            message = f"Сбой в работе программы: {error}"
+            message = f"Сбой в работе программы: {error}. Статус работы: {current_status}"
             if str(error) != str(current_error):
                 send_message(bot, message)
                 current_error = error
