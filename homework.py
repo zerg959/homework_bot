@@ -42,15 +42,16 @@ def get_api_answer(current_timestamp):
     """Request to API-endpoint."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
-    homeworks_status = requests.get(ENDPOINT, headers=HEADERS,
-                                    params=params)
+    try:
+        logger.info('sending API-request')
+        homeworks_status = requests.get(ENDPOINT, headers=HEADERS,
+                                        params=params)
+    except RequestException as request_error:
+        logger.debug('API-request is unreachable')
+        raise BotException(request_error)
     if homeworks_status.status_code != HTTPStatus.OK:
         status_code_error = 'Request can not be executed'
         raise BotException(status_code_error)
-    try:
-        logger.debug('Sending API-request')
-    except RequestException as request_error:
-        raise BotException(request_error)
     return homeworks_status.json()
 
 
@@ -68,10 +69,7 @@ def check_response(response):
         error = 'Invalid response[homeworks] data type'
         logger.error(error)
         raise TypeError(error)
-    if not isinstance(response['homeworks'][0], dict):
-        error = 'Invalid homework data type'
-        logger.error(error)
-        raise TypeError(error)
+
     if 'current_date' not in response:
         error = 'No "current_date" key in data'
         logger.error(error)
@@ -81,6 +79,10 @@ def check_response(response):
 
 def parse_status(homework):
     """Extracting homework status."""
+    if not isinstance(homework, dict):
+        error = 'Invalid homework data type'
+        logger.error(error)
+        raise TypeError(error)
     if 'homework_name' not in homework:
         logger.error('Invalid homework name key data')
         raise KeyError('Invalid response key data')
@@ -115,26 +117,29 @@ def main():
         try:
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
-            if len(homeworks) > 0:
+            if len(homeworks) == 0:
+                logger.debug('Статус не изменился')
+                continue
+            # if len(homeworks) > 0:
+            else:
                 if 'lesson_name' not in homeworks[0]:
                     logger.error('Unknown lesson name')
                     raise KeyError('Unknown lesson name')
                 last_homework = homeworks[0]
                 lesson_name = last_homework['lesson_name']
                 homework_status = parse_status(last_homework)
-                send_message(bot, f'{lesson_name}. {homework_status}')
-                if current_status != parse_status(homeworks[0]):
-                    current_status = parse_status(homeworks[0])
-                    send_message(bot, parse_status(homeworks[0]))
-                else:
-                    logger.debug('Статус не изменился')
+                if homework_status != current_status:
+                    current_status = homework_status
+                    send_message(bot, f'{lesson_name}. {homework_status}')
                 current_timestamp = response.get('current_date')
-                current_error = ''
+                current_error = current_error
+                current_status = current_status
         except Exception as error:
             message = f"Сбой в работе программы: {error}"
             if str(error) != str(current_error):
                 send_message(bot, message)
                 current_error = error
+                current_status = ''
             logger.error(message)
         finally:
             time.sleep(RETRY_TIME)
