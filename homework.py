@@ -120,19 +120,17 @@ def main():
             if len(homeworks) == 0:
                 logger.debug('Статус не изменился')
                 continue
-            if len(homeworks) > 0:
-                if 'lesson_name' not in homeworks[0]:
-                    logger.error('Unknown lesson name')
-                    raise KeyError('Unknown lesson name')
-                last_homework = homeworks[0]
-                lesson_name = last_homework['lesson_name']
-                homework_status = parse_status(last_homework)
-                if homework_status != current_status:
-                    current_status = homework_status
-                    send_message(bot, f'{lesson_name}. {homework_status}')
-                current_timestamp = response.get('current_date')
-                current_error = current_error
-                current_status = current_status
+            if 'lesson_name' not in homeworks[0]:
+                logger.error('Unknown lesson name')
+                raise KeyError('Unknown lesson name')
+            last_homework = homeworks[0]
+            lesson_name = last_homework['lesson_name']
+            homework_status = parse_status(last_homework)
+            if homework_status != current_status:
+                current_status = homework_status
+                send_message(bot, f'{lesson_name}. {homework_status}')
+            current_timestamp = response.get('current_date')
+            current_error = ''
         except Exception as error:
             message = f"Сбой в работе программы: {error}. " \
                       f"Статус работы: {current_status}"
